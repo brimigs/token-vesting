@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
+use anchor_spl::token_interface::{ self, Mint, TokenAccount, TokenInterface, TransferChecked };
 
 declare_id!("BSELdGbyBsVsPgaUAYTJCP7MWYQ1ug3z4URbXqUeSvkd");
 #[program]
@@ -9,7 +9,7 @@ pub mod vesting {
 
     pub fn create_vesting_account(
         ctx: Context<CreateVestingAccount>,
-        company_name: String,
+        company_name: String
     ) -> Result<()> {
         *ctx.accounts.vesting_account = VestingAccount {
             owner: ctx.accounts.signer.key(),
@@ -28,7 +28,7 @@ pub mod vesting {
         start_time: i64,
         end_time: i64,
         total_amount: i64,
-        cliff_time: i64,
+        cliff_time: i64
     ) -> Result<()> {
         *ctx.accounts.employee_account = EmployeeAccount {
             beneficiary: ctx.accounts.beneficiary.key(),
@@ -54,13 +54,13 @@ pub mod vesting {
         }
         // Calculate the vested amount
         let time_since_start = now.saturating_sub(employee_account.start_time);
-        let total_vesting_time = employee_account
-            .end_time
-            .saturating_sub(employee_account.start_time);
+        let total_vesting_time = employee_account.end_time.saturating_sub(
+            employee_account.start_time
+        );
         let vested_amount = if now >= employee_account.end_time {
             employee_account.total_amount
         } else {
-            employee_account.total_amount * (time_since_start) / (total_vesting_time)
+            (employee_account.total_amount * time_since_start) / total_vesting_time
         };
 
         //Calculate the amount that can be withdrawn
@@ -76,13 +76,16 @@ pub mod vesting {
             authority: ctx.accounts.treasury_token_account.to_account_info(),
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            b"vesting_treasury",
-            ctx.accounts.vesting_account.company_name.as_ref(),
-            &[ctx.accounts.vesting_account.treasury_bump],
-        ]];
-        let cpi_context =
-            CpiContext::new(cpi_program, transfer_cpi_accounts).with_signer(signer_seeds);
+        let signer_seeds: &[&[&[u8]]] = &[
+            &[
+                b"vesting_treasury",
+                ctx.accounts.vesting_account.company_name.as_ref(),
+                &[ctx.accounts.vesting_account.treasury_bump],
+            ],
+        ];
+        let cpi_context = CpiContext::new(cpi_program, transfer_cpi_accounts).with_signer(
+            signer_seeds
+        );
         let decimals = ctx.accounts.mint.decimals;
         token_interface::transfer_checked(cpi_context, claimable_amount as u64, decimals)?;
         employee_account.total_withdrawn += claimable_amount;
@@ -100,7 +103,7 @@ pub struct CreateVestingAccount<'info> {
         space = 8 + VestingAccount::INIT_SPACE,
         payer = signer,
         seeds = [company_name.as_ref()],
-        bump,
+        bump
     )]
     pub vesting_account: Account<'info, VestingAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
@@ -110,7 +113,7 @@ pub struct CreateVestingAccount<'info> {
         token::authority = treasury_token_account,
         payer = signer,
         seeds = [b"vesting_treasury", company_name.as_bytes()],
-        bump,
+        bump
     )]
     pub treasury_token_account: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -122,16 +125,14 @@ pub struct CreateEmployeeAccount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
     pub beneficiary: SystemAccount<'info>,
-    #[account(
-       has_one = owner,
-    )]
+    #[account(has_one = owner)]
     pub vesting_account: Account<'info, VestingAccount>,
     #[account(
         init,
         space = 8 + EmployeeAccount::INIT_SPACE,
         payer = owner,
         seeds = [b"employee_vesting", beneficiary.key().as_ref(), vesting_account.key().as_ref()],
-        bump,
+        bump
     )]
     pub employee_account: Account<'info, EmployeeAccount>,
     pub system_program: Program<'info, System>,

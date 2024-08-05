@@ -1,31 +1,44 @@
 // No imports needed: web3, anchor, pg and more are globally available
-import * as anchor from '@coral-xyz/anchor';
-import { BankrunProvider } from 'anchor-bankrun';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { BN, Program } from '@coral-xyz/anchor';
+import * as anchor from "@coral-xyz/anchor";
+import { BankrunProvider } from "anchor-bankrun";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { BN, Program } from "@coral-xyz/anchor";
 
-import { startAnchor, Clock, BanksClient } from 'solana-bankrun';
+import { startAnchor, Clock, BanksClient } from "solana-bankrun";
 
-import { createMint, mintTo } from 'spl-token-bankrun';
-import { PublicKey, Keypair } from '@solana/web3.js';
-import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
+import { createMint, mintTo } from "spl-token-bankrun";
+import { PublicKey, Keypair } from "@solana/web3.js";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
-import IDL from '../target/idl/vesting.json';
-import { Vesting } from '../target/types/vesting';
+import IDL from "../target/idl/vesting.json";
+import { Vesting } from "../target/types/vesting";
+import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 
-describe('Test', () => {
-  const companyName = 'Company';
+describe("Test", () => {
+  const companyName = "Company";
   let beneficiary: Keypair;
-  let vestingAccount: PublicKey;
+  let vestingAccountKey: PublicKey;
   let treasuryTokenAccount: PublicKey;
   let employeeAccount: PublicKey;
 
-  it('Test Vesting Smart Contract', async () => {
+  it("Test Vesting Smart Contract", async () => {
+    const beneficiary = new anchor.web3.Keypair();
+
     // set up bankrun
     const context = await startAnchor(
-      '',
-      [{ name: 'vesting', programId: new PublicKey(IDL.address) }],
-      []
+      "",
+      [{ name: "vesting", programId: new PublicKey(IDL.address) }],
+      [
+        {
+          address: beneficiary.publicKey,
+          info: {
+            lamports: 1_000_000_000,
+            data: Buffer.alloc(0),
+            owner: SYSTEM_PROGRAM_ID,
+            executable: false,
+          },
+        },
+      ]
     );
     const provider = new BankrunProvider(context);
 
@@ -47,28 +60,27 @@ describe('Test', () => {
     );
 
     // Generate a new keypair for the beneficiary
-    // const beneficiary = Keypair.generate();
-    // const beneficiaryWallet = new NodeWallet(beneficiary);
-    // const beneficiaryProvider = new BankrunProvider(context, beneficiaryWallet);
+    const beneficiaryProvider = new BankrunProvider(context);
+    beneficiaryProvider.wallet = new NodeWallet(beneficiary);
 
-    const beneficiary = new anchor.web3.Keypair();
+    const program2 = new Program<Vesting>(IDL as Vesting, beneficiaryProvider);
 
     // Derive PDAs
-    [vestingAccount] = PublicKey.findProgramAddressSync(
+    [vestingAccountKey] = PublicKey.findProgramAddressSync(
       [Buffer.from(companyName)],
       program.programId
     );
 
     [treasuryTokenAccount] = PublicKey.findProgramAddressSync(
-      [Buffer.from('vesting_treasury'), Buffer.from(companyName)],
+      [Buffer.from("vesting_treasury"), Buffer.from(companyName)],
       program.programId
     );
 
     [employeeAccount] = PublicKey.findProgramAddressSync(
       [
-        Buffer.from('employee_vesting'),
+        Buffer.from("employee_vesting"),
         beneficiary.publicKey.toBuffer(),
-        vestingAccount.toBuffer(),
+        vestingAccountKey.toBuffer(),
       ],
       program.programId
     );
@@ -80,14 +92,14 @@ describe('Test', () => {
         mint,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
-      .rpc({ commitment: 'confirmed' });
+      .rpc({ commitment: "confirmed" });
 
     const vestingAccountData = await program.account.vestingAccount.fetch(
-      vestingAccount,
-      'confirmed'
+      vestingAccountKey,
+      "confirmed"
     );
     console.log(
-      'Vesting Account Data:',
+      "Vesting Account Data:",
       JSON.stringify(vestingAccountData, null, 2)
     );
 
@@ -102,18 +114,22 @@ describe('Test', () => {
       amount
     );
 
-    console.log('Mint to Treasury Transaction Signature:', mintTx);
-    console.log('Create Vesting Account Transaction Signature:', tx);
+    console.log("Mint to Treasury Transaction Signature:", mintTx);
+    console.log("Create Vesting Account Transaction Signature:", tx);
 
     const tx2 = await program.methods
       .createEmployeeVesting(new BN(0), new BN(100), new BN(100), new BN(0))
       .accounts({
         beneficiary: beneficiary.publicKey,
-        vestingAccount,
+        vestingAccount: vestingAccountKey,
       })
-      .rpc({ commitment: 'confirmed', skipPreflight: true });
+      .rpc({ commitment: "confirmed", skipPreflight: true });
 
-    console.log('Create Employee Account Transaction Signature:', tx2);
+    console.log("Create Employee Account Transaction Signature:", tx2);
+
+    console.log("Emplloyee account", employeeAccount.toBase58());
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const currentClock = await banksClient.getClock();
     context.setClock(
@@ -126,14 +142,15 @@ describe('Test', () => {
       )
     );
 
-    const tx3 = await program.methods
+    console.log("Emplloyee account", employeeAccount.toBase58());
+
+    const tx3 = await program2.methods
       .claimTokens(companyName)
       .accounts({
         tokenProgram: TOKEN_PROGRAM_ID,
       })
-      .signers([beneficiary])
-      .rpc({ commitment: 'confirmed' });
+      .rpc({ commitment: "confirmed" });
 
-    console.log('Claim Tokens transaction signature', tx3);
+    console.log("Claim Tokens transaction signature", tx3);
   });
 });
