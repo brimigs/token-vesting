@@ -4,7 +4,7 @@ import { BankrunProvider } from "anchor-bankrun";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { BN, Program } from "@coral-xyz/anchor";
 
-import { startAnchor, Clock, BanksClient } from "solana-bankrun";
+import { startAnchor, Clock, BanksClient, ProgramTestContext } from "solana-bankrun";
 
 import { createMint, mintTo } from "spl-token-bankrun";
 import { PublicKey, Keypair } from "@solana/web3.js";
@@ -14,18 +14,26 @@ import IDL from "../target/idl/vesting.json";
 import { Vesting } from "../target/types/vesting";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 
-describe("Test", () => {
+describe("Vesting Smart Contract Tests", () => {
   const companyName = "Company";
   let beneficiary: Keypair;
   let vestingAccountKey: PublicKey;
   let treasuryTokenAccount: PublicKey;
   let employeeAccount: PublicKey;
+  let provider: BankrunProvider;
+  let program: Program<Vesting>;
+  let banksClient: BanksClient;
+  let employer: Keypair;
+  let mint: PublicKey;
+  let beneficiaryProvider: BankrunProvider;
+  let program2: Program<Vesting>;
+  let context: ProgramTestContext;
 
-  it("Test Vesting Smart Contract", async () => {
-    const beneficiary = new anchor.web3.Keypair();
+  beforeAll(async () => {
+    beneficiary = new anchor.web3.Keypair();
 
     // set up bankrun
-    const context = await startAnchor(
+    context = await startAnchor(
       "",
       [{ name: "vesting", programId: new PublicKey(IDL.address) }],
       [
@@ -40,18 +48,18 @@ describe("Test", () => {
         },
       ]
     );
-    const provider = new BankrunProvider(context);
+    provider = new BankrunProvider(context);
 
     anchor.setProvider(provider);
 
-    const program = new Program<Vesting>(IDL as Vesting, provider);
+    program = new Program<Vesting>(IDL as Vesting, provider);
 
-    const banksClient: BanksClient = context.banksClient;
+    banksClient = context.banksClient;
 
-    const employer = provider.wallet.payer;
+    employer = provider.wallet.payer;
 
     // Create a new mint
-    const mint = await createMint(
+    mint = await createMint(
       banksClient,
       employer,
       employer.publicKey,
@@ -60,10 +68,10 @@ describe("Test", () => {
     );
 
     // Generate a new keypair for the beneficiary
-    const beneficiaryProvider = new BankrunProvider(context);
+    beneficiaryProvider = new BankrunProvider(context);
     beneficiaryProvider.wallet = new NodeWallet(beneficiary);
 
-    const program2 = new Program<Vesting>(IDL as Vesting, beneficiaryProvider);
+    program2 = new Program<Vesting>(IDL as Vesting, beneficiaryProvider);
 
     // Derive PDAs
     [vestingAccountKey] = PublicKey.findProgramAddressSync(
@@ -84,7 +92,9 @@ describe("Test", () => {
       ],
       program.programId
     );
+  });
 
+  it("should create a vesting account", async () => {
     const tx = await program.methods
       .createVestingAccount(companyName)
       .accounts({
@@ -103,8 +113,11 @@ describe("Test", () => {
       JSON.stringify(vestingAccountData, null, 2)
     );
 
+    console.log("Create Vesting Account Transaction Signature:", tx);
+  });
+
+  it("should fund the treasury token account", async () => {
     const amount = 10_000 * 10 ** 9;
-    // Fund treasuryTokenAccount
     const mintTx = await mintTo(
       banksClient,
       employer,
@@ -115,8 +128,9 @@ describe("Test", () => {
     );
 
     console.log("Mint to Treasury Transaction Signature:", mintTx);
-    console.log("Create Vesting Account Transaction Signature:", tx);
+  });
 
+  it("should create an employee vesting account", async () => {
     const tx2 = await program.methods
       .createEmployeeVesting(new BN(0), new BN(100), new BN(100), new BN(0))
       .accounts({
@@ -126,9 +140,10 @@ describe("Test", () => {
       .rpc({ commitment: "confirmed", skipPreflight: true });
 
     console.log("Create Employee Account Transaction Signature:", tx2);
+    console.log("Employee account", employeeAccount.toBase58());
+  });
 
-    console.log("Emplloyee account", employeeAccount.toBase58());
-
+  it("should claim tokens", async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const currentClock = await banksClient.getClock();
@@ -142,7 +157,7 @@ describe("Test", () => {
       )
     );
 
-    console.log("Emplloyee account", employeeAccount.toBase58());
+    console.log("Employee account", employeeAccount.toBase58());
 
     const tx3 = await program2.methods
       .claimTokens(companyName)
