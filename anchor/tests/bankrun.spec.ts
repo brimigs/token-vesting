@@ -4,7 +4,12 @@ import { BankrunProvider } from "anchor-bankrun";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { BN, Program } from "@coral-xyz/anchor";
 
-import { startAnchor, Clock, BanksClient, ProgramTestContext } from "solana-bankrun";
+import {
+  startAnchor,
+  Clock,
+  BanksClient,
+  ProgramTestContext,
+} from "solana-bankrun";
 
 import { createMint, mintTo } from "spl-token-bankrun";
 import { PublicKey, Keypair } from "@solana/web3.js";
@@ -59,13 +64,8 @@ describe("Vesting Smart Contract Tests", () => {
     employer = provider.wallet.payer;
 
     // Create a new mint
-    mint = await createMint(
-      banksClient,
-      employer,
-      employer.publicKey,
-      null,
-      2
-    );
+    // @ts-ignore
+    mint = await createMint(banksClient, employer, employer.publicKey, null, 2);
 
     // Generate a new keypair for the beneficiary
     beneficiaryProvider = new BankrunProvider(context);
@@ -119,6 +119,7 @@ describe("Vesting Smart Contract Tests", () => {
   it("should fund the treasury token account", async () => {
     const amount = 10_000 * 10 ** 9;
     const mintTx = await mintTo(
+      // @ts-ignores
       banksClient,
       employer,
       mint,

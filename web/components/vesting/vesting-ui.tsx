@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { PublicKey } from '@solana/web3.js';
-import { useMemo, useState } from 'react';
+import { PublicKey } from "@solana/web3.js";
+import { useMemo, useState } from "react";
 import {
   useVestingProgram,
   useVestingProgramAccount,
-} from './vesting-data-access';
-import { useWallet } from '@solana/wallet-adapter-react';
+} from "./vesting-data-access";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export function VestingCreate() {
   const { createVestingAccount } = useVestingProgram();
   const { publicKey } = useWallet();
-  const [company, setCompany] = useState('');
-  const [mint, setMint] = useState('');
+  const [company, setCompany] = useState("");
+  const [mint, setMint] = useState("");
 
   const isFormValid = company.length > 0;
 
@@ -47,7 +47,7 @@ export function VestingCreate() {
         onClick={handleSubmit}
         disabled={createVestingAccount.isPending || !isFormValid}
       >
-        Create New Vesting Account {createVestingAccount.isPending && '...'}
+        Create New Vesting Account {createVestingAccount.isPending && "..."}
       </button>
     </div>
   );
@@ -70,7 +70,7 @@ export function VestingList() {
     );
   }
   return (
-    <div className={'space-y-6'}>
+    <div className={"space-y-6"}>
       {accounts.isLoading ? (
         <span className="loading loading-spinner loading-lg"></span>
       ) : accounts.data?.length ? (
@@ -84,7 +84,7 @@ export function VestingList() {
         </div>
       ) : (
         <div className="text-center">
-          <h2 className={'text-2xl'}>No accounts</h2>
+          <h2 className={"text-2xl"}>No accounts</h2>
           No accounts found. Create one above to get started.
         </div>
       )}
@@ -122,28 +122,28 @@ function VestingCard({ account }: { account: PublicKey }) {
             <input
               type="text"
               placeholder="Start Time"
-              value={startTime}
+              value={startTime || ""}
               onChange={(e) => setStartTime(parseInt(e.target.value))}
               className="input input-bordered w-full max-w-xs"
             />
             <input
               type="text"
               placeholder="End Time"
-              value={endTime}
+              value={endTime || ""}
               onChange={(e) => setEndTime(parseInt(e.target.value))}
               className="input input-bordered w-full max-w-xs"
             />
             <input
               type="text"
               placeholder="Cliff Time"
-              value={cliffTime}
+              value={cliffTime || ""}
               onChange={(e) => setCliffTime(parseInt(e.target.value))}
               className="input input-bordered w-full max-w-xs"
             />
             <input
               type="text"
               placeholder="Total Allocation"
-              value={totalAmount}
+              value={totalAmount || ""}
               onChange={(e) => setTotalAmount(parseInt(e.target.value))}
               className="input input-bordered w-full max-w-xs"
             />

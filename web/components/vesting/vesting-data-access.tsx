@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { getVestingProgram, getVestingProgramId } from '@token-vesting/anchor';
-import { useConnection } from '@solana/wallet-adapter-react';
-import { Cluster, PublicKey } from '@solana/web3.js';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import toast from 'react-hot-toast';
-import { useCluster } from '../cluster/cluster-data-access';
-import { useAnchorProvider } from '../solana/solana-provider';
-import { useTransactionToast } from '../ui/ui-layout';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { getVestingProgram, getVestingProgramId } from "@token-vesting/anchor";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { Cluster, PublicKey } from "@solana/web3.js";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import toast from "react-hot-toast";
+import { useCluster } from "../cluster/cluster-data-access";
+import { useAnchorProvider } from "../solana/solana-provider";
+import { useTransactionToast } from "../ui/ui-layout";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 interface CreateVestingArgs {
   companyName: string;
@@ -35,17 +35,17 @@ export function useVestingProgram() {
   const program = getVestingProgram(provider);
 
   const accounts = useQuery({
-    queryKey: ['vesting', 'all', { cluster }],
+    queryKey: ["vesting", "all", { cluster }],
     queryFn: () => program.account.vestingAccount.all(),
   });
 
   const getProgramAccount = useQuery({
-    queryKey: ['get-program-account', { cluster }],
+    queryKey: ["get-program-account", { cluster }],
     queryFn: () => connection.getParsedAccountInfo(programId),
   });
 
   const createVestingAccount = useMutation<string, Error, CreateVestingArgs>({
-    mutationKey: ['vestingAccount', 'create', { cluster }],
+    mutationKey: ["vestingAccount", "create", { cluster }],
     mutationFn: ({ companyName, mint }) =>
       program.methods
         .createVestingAccount(companyName)
@@ -55,7 +55,7 @@ export function useVestingProgram() {
       transactionToast(signature);
       return accounts.refetch();
     },
-    onError: () => toast.error('Failed to initialize account'),
+    onError: () => toast.error("Failed to initialize account"),
   });
 
   return {
@@ -73,12 +73,12 @@ export function useVestingProgramAccount({ account }: { account: PublicKey }) {
   const { program, accounts } = useVestingProgram();
 
   const accountQuery = useQuery({
-    queryKey: ['vesting', 'fetch', { cluster, account }],
+    queryKey: ["vesting", "fetch", { cluster, account }],
     queryFn: () => program.account.vestingAccount.fetch(account),
   });
 
   const createEmployeeVesting = useMutation<string, Error, CreateEmployeeArgs>({
-    mutationKey: ['vesting', 'close', { cluster, account }],
+    mutationKey: ["vesting", "close", { cluster, account }],
     mutationFn: ({ startTime, endTime, totalAmount, cliffTime }) =>
       program.methods
         .createEmployeeVesting(startTime, endTime, totalAmount, cliffTime)
