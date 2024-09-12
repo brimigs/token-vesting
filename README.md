@@ -1,96 +1,72 @@
-# token-vesting
+# Token Vesting
+
+### Disclaimer: This code is not audited and should not be used in production. There are several edge cases that have not been addressed and error handling that has not been implemented. This is for education purposes only.
+
+This repository contains a Solana smart contract written in Rust using the Anchor framework for managing token vesting schedules. The program allows for the creation of vesting accounts for companies and employees, enabling token distributions based on predefined vesting schedules.
 
 This project is generated with the [create-solana-dapp](https://github.com/solana-developers/create-solana-dapp) generator.
 
-## Getting Started
+## Features
 
-### Prerequisites
+Create Vesting Account: Set up a vesting account for a company, specifying the company name and associated accounts.
+Create Employee Vesting: Establish a vesting schedule for an employee, including start and end times, total amount, and a cliff period.
+Claim Tokens: Allows employees to claim their vested tokens after the cliff period, based on the time elapsed and the amount vested.
 
-- Node v18.18.0 or higher
+## Program Functions
 
-- Rust v1.77.2 or higher
-- Anchor CLI 0.30.0 or higher
-- Solana CLI 1.18.9 or higher
+- `create_vesting_account`: Initializes a vesting account for a company and initializes a vesting token account to hold the entire token allocation.
+- `create_employee_vesting`: Initializes a vesting schedule for an employee adn initializes an employee token account to receive their unlocked allocation.
+- `claim_tokens`: Allows an employee to claim all vested tokens that have unlocked.
 
-### Installation
+## Account Structures
 
-#### Clone the repo
+- `CreateEmployeeAccount`: Account structure for creating an employee vesting account.
+- `CreateVestingAccount`: Account structure for creating a company's vesting account.
+- `ClaimTokens`: Account structure for claiming tokens.
 
-```shell
-git clone <repo-url>
-cd <repo-name>
-```
+## Data Structures
 
-#### Install Dependencies
+- `EmployeeAccount`: Stores details about an employee's vesting schedule.
+- `VestingAccount`: Stores details about a company's vesting account.
 
-```shell
-npm install
-```
+## Running the App
 
-#### Start the web app
+### Anchor
 
-```
-npm run dev
-```
+To use this contract, you'll need to set up your Solana development environment. Here are the prerequisites and steps to get started:
 
-## Apps
-
-### anchor
-
-This is a Solana program written in Rust using the Anchor framework.
-
-#### Commands
-
-You can use any normal anchor commands. Either move to the `anchor` directory and run the `anchor` command or prefix the command with `npm run`, eg: `npm run anchor`.
-
-#### Sync the program id:
-
-Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
-
-You will manually need to update the constant in `anchor/lib/vesting-exports.ts` to match the new program id.
+1. Sync the program ID:
 
 ```shell
 npm run anchor keys sync
 ```
 
-#### Build the program:
+Note: Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
+
+You will manually need to update the constant in `anchor/lib/vesting-exports.ts` to match the new program id.
+
+2. Build the project:
 
 ```shell
 npm run anchor-build
 ```
 
-#### Start the test validator with the program deployed:
+3. Start the test validator and deploy your program:
 
 ```shell
 npm run anchor-localnet
 ```
 
-#### Run the tests
+### Web App
+
+1. Install Dependencies
 
 ```shell
-npm run anchor-test
+npm install
 ```
 
-#### Deploy to Devnet
-
-```shell
-npm run anchor deploy --provider.cluster devnet
-```
-
-### web
-
-This is a React app that uses the Anchor generated client to interact with the Solana program.
-
-#### Commands
-
-Start the web app
+2. Start the Web App
 
 ```shell
 npm run dev
-```
-
-Build the web app
-
-```shell
-npm run build
 ```
