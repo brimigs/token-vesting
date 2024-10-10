@@ -62,6 +62,7 @@ npm run anchor-localnet
 1. Install Dependencies
 
 ```shell
+cd web
 npm install
 ```
 
@@ -69,4 +70,19 @@ npm install
 
 ```shell
 npm run dev
+```
+
+### Testing
+
+1. Install bankrun
+
+```shell
+cd anchor
+npm install
+```
+
+2. Run tests
+
+```shell
+anchor test
 ```

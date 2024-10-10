@@ -377,6 +377,16 @@
       "code": 6001,
       "name": "NothingToClaim",
       "msg": "There is nothing to claim."
+    },
+    {
+      "code": 6002,
+      "name": "InvalidVestingPeriod",
+      "msg": "Invalid vesting period."
+    },
+    {
+      "code": 6003,
+      "name": "CalculationOverflow",
+      "msg": "Calculation overflow."
     }
   ],
   "types": [

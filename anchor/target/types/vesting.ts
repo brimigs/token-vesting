@@ -383,6 +383,16 @@ export type Vesting = {
       "code": 6001,
       "name": "nothingToClaim",
       "msg": "There is nothing to claim."
+    },
+    {
+      "code": 6002,
+      "name": "invalidVestingPeriod",
+      "msg": "Invalid vesting period."
+    },
+    {
+      "code": 6003,
+      "name": "calculationOverflow",
+      "msg": "Calculation overflow."
     }
   ],
   "types": [
